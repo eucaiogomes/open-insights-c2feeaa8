@@ -430,8 +430,8 @@ export default function EditStudio() {
               segs={segments.filter((s) => s.layer === layerIdx)}
               pxPerSec={PX_PER_SEC}
               totalPx={trackPxWidth}
-              selectedId={selectedId}
-              setSelectedId={setSelectedId}
+              selectedIds={selectedIds}
+              toggleSelect={toggleSelect}
               trim={trim}
               moveSegment={moveSegment}
             />
