@@ -313,37 +313,12 @@ export default function EditStudio() {
       {chaptersOpen && <ChaptersPanel onClose={() => setChaptersOpen(false)} segments={chapters} onSeek={seek} />}
 
       {/* Preview */}
-      <div className="flex flex-1 items-stretch justify-center gap-6 px-6 pb-4 pt-4">
-        {mainVideo && (
-          <div className="relative aspect-video h-full max-h-[420px] overflow-hidden rounded-xl border-2 border-primary shadow-2xl bg-black">
-            <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted />
-            <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white">
-              <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--rec))] animate-pulse" /> WEBCAM
-            </div>
-          </div>
-        )}
-        <div className="relative flex h-full max-h-[420px] flex-1 items-center justify-center rounded-2xl bg-[hsl(var(--slide-bg))] p-4 ring-1 ring-white/5 overflow-hidden">
-          {mainSlide?.slideUrl ? (
-            <img src={mainSlide.slideUrl} alt="slide" className="max-h-full max-w-full rounded-lg object-contain" />
-          ) : mainSlide && overlayImages.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
-              <ImageIcon className="h-10 w-10 opacity-40" />
-              <div className="text-sm">Slide em branco</div>
-              <div className="text-xs opacity-70">Use “Mídia” ou “Gravar nova cena” para começar</div>
-            </div>
-          ) : !mainSlide && overlayImages.length === 0 ? (
-            <div className="text-muted-foreground text-sm">Sem slide ativo</div>
-          ) : null}
-          {overlayImages.map((o) => (
-            <img
-              key={o.id}
-              src={o.mediaUrl}
-              alt={o.label}
-              className="pointer-events-none absolute inset-0 h-full w-full rounded-lg object-contain"
-            />
-          ))}
-        </div>
-      </div>
+      <PreviewArea
+        videoRef={videoRef}
+        mainVideo={mainVideo}
+        mainSlide={mainSlide}
+        overlayImages={overlayImages}
+      />
 
       {/* hidden audio elements */}
       {segments.filter((s) => s.kind === "audio").map((s) => (
