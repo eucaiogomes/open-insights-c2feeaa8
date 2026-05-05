@@ -425,8 +425,28 @@ export default function EditStudio() {
           ))}
 
           {/* playhead */}
-          <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-[hsl(var(--rec))]" style={{ left: 80 + time * PX_PER_SEC }}>
-            <div className="absolute -top-1 -left-[5px] h-2.5 w-2.5 rotate-45 bg-[hsl(var(--rec))]" />
+          <div
+            className="absolute top-0 bottom-0 w-px cursor-grab active:cursor-grabbing bg-[hsl(var(--rec))]"
+            style={{ left: 80 + time * PX_PER_SEC }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const scrollEl = timelineScrollRef.current;
+              const startScroll = scrollEl?.scrollLeft ?? 0;
+              const startX = e.clientX;
+              const startTime = time;
+              const move = (ev: MouseEvent) => {
+                const dx = ev.clientX - startX + ((scrollEl?.scrollLeft ?? 0) - startScroll);
+                seek(startTime + dx / PX_PER_SEC);
+              };
+              const up = () => {
+                window.removeEventListener("mousemove", move);
+                window.removeEventListener("mouseup", up);
+              };
+              window.addEventListener("mousemove", move);
+              window.addEventListener("mouseup", up);
+            }}
+          >
+            <div className="absolute -top-1 -left-[5px] h-2.5 w-2.5 rotate-45 cursor-grab active:cursor-grabbing bg-[hsl(var(--rec))]" />
           </div>
         </div>
       </div>
