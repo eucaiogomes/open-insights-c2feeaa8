@@ -46,8 +46,19 @@ export default function EditStudio() {
   const [playing, setPlaying] = useState(false);
   const [chaptersOpen, setChaptersOpen] = useState(false);
   const [segments, setSegments] = useState<Segment[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const selectedId = selectedIds.size === 1 ? Array.from(selectedIds)[0] : null;
   const [zoom, setZoom] = useState(1);
+
+  const toggleSelect = (id: string, additive: boolean) => {
+    setSelectedIds((prev) => {
+      if (!additive) return new Set([id]);
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+  const clearSelection = () => setSelectedIds(new Set());
 
   // Build initial segments from recording — or a blank slide if starting fresh
   useEffect(() => {
