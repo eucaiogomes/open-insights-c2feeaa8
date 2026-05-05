@@ -478,11 +478,8 @@ function PreviewArea({
   if (mainVideo && !hasStage) {
     return (
       <div className="flex flex-1 items-center justify-center px-6 pb-4 pt-4">
-        <div className="relative aspect-video h-full max-h-[480px] overflow-hidden rounded-2xl border-2 border-primary shadow-2xl bg-black">
+        <div className="relative aspect-video h-full max-h-[480px] overflow-hidden rounded-2xl bg-black shadow-lg">
           <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted />
-          <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white">
-            <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--rec))] animate-pulse" /> WEBCAM
-          </div>
         </div>
       </div>
     );
@@ -517,16 +514,13 @@ function PreviewArea({
         {mainVideo && hasStage && (
           <div
             onMouseDown={onPipDown}
-            className="absolute cursor-grab active:cursor-grabbing overflow-hidden rounded-xl border-2 border-primary shadow-2xl bg-black"
+            className="absolute cursor-grab active:cursor-grabbing overflow-hidden rounded-2xl bg-black shadow-lg"
             style={{ left: pip.x, top: pip.y, width: pip.w, height: (pip.w * 9) / 16 }}
           >
             <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted />
-            <div className="pointer-events-none absolute left-1.5 top-1.5 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-              <span className="h-1 w-1 rounded-full bg-[hsl(var(--rec))] animate-pulse" /> WEBCAM
-            </div>
             <div
               onMouseDown={onPipResize}
-              className="absolute bottom-0 right-0 h-3 w-3 cursor-nwse-resize bg-primary/70"
+              className="absolute bottom-0 right-0 h-3 w-3 cursor-nwse-resize bg-white/40 rounded-tl"
             />
           </div>
         )}
