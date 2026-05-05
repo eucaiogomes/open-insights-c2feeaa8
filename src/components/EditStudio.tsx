@@ -313,37 +313,12 @@ export default function EditStudio() {
       {chaptersOpen && <ChaptersPanel onClose={() => setChaptersOpen(false)} segments={chapters} onSeek={seek} />}
 
       {/* Preview */}
-      <div className="flex flex-1 items-stretch justify-center gap-6 px-6 pb-4 pt-4">
-        {mainVideo && (
-          <div className="relative aspect-video h-full max-h-[420px] overflow-hidden rounded-xl border-2 border-primary shadow-2xl bg-black">
-            <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted />
-            <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white">
-              <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--rec))] animate-pulse" /> WEBCAM
-            </div>
-          </div>
-        )}
-        <div className="relative flex h-full max-h-[420px] flex-1 items-center justify-center rounded-2xl bg-[hsl(var(--slide-bg))] p-4 ring-1 ring-white/5 overflow-hidden">
-          {mainSlide?.slideUrl ? (
-            <img src={mainSlide.slideUrl} alt="slide" className="max-h-full max-w-full rounded-lg object-contain" />
-          ) : mainSlide && overlayImages.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
-              <ImageIcon className="h-10 w-10 opacity-40" />
-              <div className="text-sm">Slide em branco</div>
-              <div className="text-xs opacity-70">Use “Mídia” ou “Gravar nova cena” para começar</div>
-            </div>
-          ) : !mainSlide && overlayImages.length === 0 ? (
-            <div className="text-muted-foreground text-sm">Sem slide ativo</div>
-          ) : null}
-          {overlayImages.map((o) => (
-            <img
-              key={o.id}
-              src={o.mediaUrl}
-              alt={o.label}
-              className="pointer-events-none absolute inset-0 h-full w-full rounded-lg object-contain"
-            />
-          ))}
-        </div>
-      </div>
+      <PreviewArea
+        videoRef={videoRef}
+        mainVideo={mainVideo}
+        mainSlide={mainSlide}
+        overlayImages={overlayImages}
+      />
 
       {/* hidden audio elements */}
       {segments.filter((s) => s.kind === "audio").map((s) => (
@@ -449,6 +424,112 @@ export default function EditStudio() {
             <div className="absolute -top-1 -left-[5px] h-2.5 w-2.5 rotate-45 cursor-grab active:cursor-grabbing bg-[hsl(var(--rec))]" />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PreviewArea({
+  videoRef,
+  mainVideo,
+  mainSlide,
+  overlayImages,
+}: {
+  videoRef: React.RefObject<HTMLVideoElement>;
+  mainVideo: Segment | undefined;
+  mainSlide: Segment | undefined;
+  overlayImages: Segment[];
+}) {
+  const hasStage = !!mainSlide || overlayImages.length > 0;
+  const [pip, setPip] = useState({ x: 16, y: 16, w: 220 });
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  const onPipDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX, startY = e.clientY;
+    const start = { ...pip };
+    const stage = stageRef.current?.getBoundingClientRect();
+    const move = (ev: MouseEvent) => {
+      const nx = start.x + (ev.clientX - startX);
+      const ny = start.y + (ev.clientY - startY);
+      const maxX = (stage?.width ?? 1000) - start.w - 4;
+      const maxY = (stage?.height ?? 600) - (start.w * 9) / 16 - 4;
+      setPip((p) => ({ ...p, x: Math.max(4, Math.min(maxX, nx)), y: Math.max(4, Math.min(maxY, ny)) }));
+    };
+    const up = () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  const onPipResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startW = pip.w;
+    const move = (ev: MouseEvent) => {
+      const nw = Math.max(120, Math.min(600, startW + (ev.clientX - startX)));
+      setPip((p) => ({ ...p, w: nw }));
+    };
+    const up = () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  if (mainVideo && !hasStage) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-6 pb-4 pt-4">
+        <div className="relative aspect-video h-full max-h-[480px] overflow-hidden rounded-2xl border-2 border-primary shadow-2xl bg-black">
+          <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted />
+          <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white">
+            <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--rec))] animate-pulse" /> WEBCAM
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-1 items-stretch justify-center px-6 pb-4 pt-4">
+      <div
+        ref={stageRef}
+        className="relative flex h-full max-h-[480px] flex-1 items-center justify-center rounded-2xl bg-[hsl(var(--slide-bg))] p-4 ring-1 ring-white/5 overflow-hidden"
+      >
+        {mainSlide?.slideUrl ? (
+          <img src={mainSlide.slideUrl} alt="slide" className="max-h-full max-w-full rounded-lg object-contain" />
+        ) : mainSlide && overlayImages.length === 0 && !mainVideo ? (
+          <div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
+            <ImageIcon className="h-10 w-10 opacity-40" />
+            <div className="text-sm">Slide em branco</div>
+            <div className="text-xs opacity-70">Use “Mídia” ou “Gravar nova cena” para começar</div>
+          </div>
+        ) : !mainSlide && overlayImages.length === 0 && !mainVideo ? (
+          <div className="text-muted-foreground text-sm">Sem slide ativo</div>
+        ) : null}
+        {overlayImages.map((o) => (
+          <img
+            key={o.id}
+            src={o.mediaUrl}
+            alt={o.label}
+            className="pointer-events-none absolute inset-0 h-full w-full rounded-lg object-contain"
+          />
+        ))}
+
+        {mainVideo && hasStage && (
+          <div
+            onMouseDown={onPipDown}
+            className="absolute cursor-grab active:cursor-grabbing overflow-hidden rounded-xl border-2 border-primary shadow-2xl bg-black"
+            style={{ left: pip.x, top: pip.y, width: pip.w, height: (pip.w * 9) / 16 }}
+          >
+            <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted />
+            <div className="pointer-events-none absolute left-1.5 top-1.5 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="h-1 w-1 rounded-full bg-[hsl(var(--rec))] animate-pulse" /> WEBCAM
+            </div>
+            <div
+              onMouseDown={onPipResize}
+              className="absolute bottom-0 right-0 h-3 w-3 cursor-nwse-resize bg-primary/70"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
