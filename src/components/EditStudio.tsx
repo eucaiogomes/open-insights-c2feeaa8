@@ -574,13 +574,13 @@ const KIND_STYLE: Record<Kind, { color: string; Icon: any }> = {
   image: { color: "bg-amber-500/30 ring-amber-500/60", Icon: Film },
 };
 
-function LayerRow({ layerIdx, segs, pxPerSec, totalPx, selectedId, setSelectedId, trim, moveSegment }: {
+function LayerRow({ layerIdx, segs, pxPerSec, totalPx, selectedIds, toggleSelect, trim, moveSegment }: {
   layerIdx: number;
   segs: Segment[];
   pxPerSec: number;
   totalPx: number;
-  selectedId: string | null;
-  setSelectedId: (id: string) => void;
+  selectedIds: Set<string>;
+  toggleSelect: (id: string, additive: boolean) => void;
   trim: (id: string, edge: "start" | "end", deltaSec: number) => void;
   moveSegment: (id: string, newStart: number, targetLayer: number) => void;
 }) {
@@ -606,7 +606,7 @@ function LayerRow({ layerIdx, segs, pxPerSec, totalPx, selectedId, setSelectedId
         {segs.map((s) => {
           const left = s.start * pxPerSec;
           const width = (s.srcEnd - s.srcStart) * pxPerSec;
-          const selected = selectedId === s.id;
+          const selected = selectedIds.has(s.id);
           const style = KIND_STYLE[s.kind];
           return (
             <div
@@ -619,7 +619,11 @@ function LayerRow({ layerIdx, segs, pxPerSec, totalPx, selectedId, setSelectedId
                 e.dataTransfer.setData("text/offset-sec", String(offsetSec));
                 e.dataTransfer.effectAllowed = "move";
               }}
-              onMouseDown={(e) => { if ((e.target as HTMLElement).dataset.handle) return; setSelectedId(s.id); }}
+              onMouseDown={(e) => {
+                if ((e.target as HTMLElement).dataset.handle) return;
+                const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+                if (additive || !selected) toggleSelect(s.id, additive);
+              }}
               className={`group absolute inset-y-0.5 cursor-grab overflow-hidden rounded ring-1 ${style.color} ${selected ? "outline outline-2 outline-[hsl(var(--rec))]" : ""}`}
               style={{ left, width }}
             >
