@@ -334,11 +334,13 @@ export default function EditStudio() {
           ) : (
             <div className="text-muted-foreground text-sm">Sem slide ativo</div>
           )}
-          {overlayImages.map((o, i) => (
-            <div key={o.id} className="pointer-events-none absolute max-h-[40%] max-w-[40%] overflow-hidden rounded-lg ring-2 ring-primary shadow-2xl"
-              style={{ right: 12 + i * 16, top: 12 + i * 16 }}>
-              <img src={o.mediaUrl} alt={o.label} className="h-full w-full object-cover" />
-            </div>
+          {overlayImages.map((o) => (
+            <img
+              key={o.id}
+              src={o.mediaUrl}
+              alt={o.label}
+              className="pointer-events-none absolute inset-0 h-full w-full rounded-lg object-contain"
+            />
           ))}
         </div>
       </div>
@@ -423,8 +425,28 @@ export default function EditStudio() {
           ))}
 
           {/* playhead */}
-          <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-[hsl(var(--rec))]" style={{ left: 80 + time * PX_PER_SEC }}>
-            <div className="absolute -top-1 -left-[5px] h-2.5 w-2.5 rotate-45 bg-[hsl(var(--rec))]" />
+          <div
+            className="absolute top-0 bottom-0 w-px cursor-grab active:cursor-grabbing bg-[hsl(var(--rec))]"
+            style={{ left: 80 + time * PX_PER_SEC }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const scrollEl = timelineScrollRef.current;
+              const startScroll = scrollEl?.scrollLeft ?? 0;
+              const startX = e.clientX;
+              const startTime = time;
+              const move = (ev: MouseEvent) => {
+                const dx = ev.clientX - startX + ((scrollEl?.scrollLeft ?? 0) - startScroll);
+                seek(startTime + dx / PX_PER_SEC);
+              };
+              const up = () => {
+                window.removeEventListener("mousemove", move);
+                window.removeEventListener("mouseup", up);
+              };
+              window.addEventListener("mousemove", move);
+              window.addEventListener("mouseup", up);
+            }}
+          >
+            <div className="absolute -top-1 -left-[5px] h-2.5 w-2.5 rotate-45 cursor-grab active:cursor-grabbing bg-[hsl(var(--rec))]" />
           </div>
         </div>
       </div>
