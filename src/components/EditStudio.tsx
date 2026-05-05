@@ -396,12 +396,17 @@ export default function EditStudio() {
 
       {/* edit toolbar */}
       <div className="mt-2 flex items-center gap-2 px-4">
-        <button onClick={splitAtPlayhead} disabled={!selectedId} className="flex items-center gap-1.5 rounded-md bg-card px-2.5 py-1.5 text-xs ring-1 ring-border hover:bg-muted disabled:opacity-40">
-          <Scissors className="h-3.5 w-3.5" /> Dividir
+        <button onClick={splitAtPlayhead} disabled={selectedIds.size === 0} className="flex items-center gap-1.5 rounded-md bg-card px-2.5 py-1.5 text-xs ring-1 ring-border hover:bg-muted disabled:opacity-40">
+          <Scissors className="h-3.5 w-3.5" /> Dividir{selectedIds.size > 1 ? ` (${selectedIds.size})` : ""}
         </button>
-        <button onClick={deleteSelected} disabled={!selectedId} className="flex items-center gap-1.5 rounded-md bg-card px-2.5 py-1.5 text-xs ring-1 ring-border hover:bg-muted disabled:opacity-40">
-          <Trash2 className="h-3.5 w-3.5" /> Apagar
+        <button onClick={deleteSelected} disabled={selectedIds.size === 0} className="flex items-center gap-1.5 rounded-md bg-card px-2.5 py-1.5 text-xs ring-1 ring-border hover:bg-muted disabled:opacity-40">
+          <Trash2 className="h-3.5 w-3.5" /> Apagar{selectedIds.size > 1 ? ` (${selectedIds.size})` : ""}
         </button>
+        {selectedIds.size > 0 && (
+          <button onClick={clearSelection} className="rounded-md bg-card px-2.5 py-1.5 text-xs ring-1 ring-border hover:bg-muted">
+            Limpar seleção
+          </button>
+        )}
         <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
           <button onClick={() => setZoom((z) => Math.max(0.4, z - 0.2))} className="rounded-md px-2 py-1 hover:bg-muted">−</button>
           Zoom {Math.round(zoom * 100)}%
