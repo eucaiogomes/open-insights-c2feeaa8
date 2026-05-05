@@ -334,11 +334,13 @@ export default function EditStudio() {
           ) : (
             <div className="text-muted-foreground text-sm">Sem slide ativo</div>
           )}
-          {overlayImages.map((o, i) => (
-            <div key={o.id} className="pointer-events-none absolute max-h-[40%] max-w-[40%] overflow-hidden rounded-lg ring-2 ring-primary shadow-2xl"
-              style={{ right: 12 + i * 16, top: 12 + i * 16 }}>
-              <img src={o.mediaUrl} alt={o.label} className="h-full w-full object-cover" />
-            </div>
+          {overlayImages.map((o) => (
+            <img
+              key={o.id}
+              src={o.mediaUrl}
+              alt={o.label}
+              className="pointer-events-none absolute inset-0 h-full w-full rounded-lg object-contain"
+            />
           ))}
         </div>
       </div>
