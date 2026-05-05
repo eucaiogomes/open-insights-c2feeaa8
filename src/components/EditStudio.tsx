@@ -191,22 +191,30 @@ export default function EditStudio() {
   };
 
   const splitAtPlayhead = () => {
-    const sel = segments.find((s) => s.id === selectedId);
-    if (!sel) return toast.error("Selecione um clip");
-    const local = time - sel.start;
-    if (local <= 0.05 || local >= lenOf(sel) - 0.05) return toast.error("Posicione o cursor dentro do clip");
-    const splitSrc = sel.srcStart + local;
-    const a: Segment = { ...sel, id: uid(), srcEnd: splitSrc };
-    const b: Segment = { ...sel, id: uid(), srcStart: splitSrc, start: sel.start + local };
-    setSegments((prev) => prev.flatMap((s) => (s.id === sel.id ? [a, b] : [s])));
-    setSelectedId(b.id);
-    toast.success("Clip dividido");
+    const targets = segments.filter(
+      (s) => selectedIds.has(s.id) && time > s.start + 0.05 && time < endOf(s) - 0.05,
+    );
+    if (targets.length === 0) return toast.error("Posicione o cursor dentro de um clip selecionado");
+    const newSel = new Set<string>();
+    setSegments((prev) =>
+      prev.flatMap((s) => {
+        if (!targets.find((t) => t.id === s.id)) return [s];
+        const local = time - s.start;
+        const splitSrc = s.srcStart + local;
+        const a: Segment = { ...s, id: uid(), srcEnd: splitSrc };
+        const b: Segment = { ...s, id: uid(), srcStart: splitSrc, start: s.start + local };
+        newSel.add(b.id);
+        return [a, b];
+      }),
+    );
+    setSelectedIds(newSel);
+    toast.success(`${targets.length} clip(s) dividido(s)`);
   };
 
   const deleteSelected = () => {
-    if (!selectedId) return;
-    setSegments((prev) => prev.filter((s) => s.id !== selectedId));
-    setSelectedId(null);
+    if (selectedIds.size === 0) return;
+    setSegments((prev) => prev.filter((s) => !selectedIds.has(s.id)));
+    setSelectedIds(new Set());
   };
 
   /** Trim by source delta. Prevents overlap with same-layer neighbours by clamping. */
@@ -215,10 +223,9 @@ export default function EditStudio() {
       if (s.id !== id) return s;
       const sameLayer = prev.filter((x) => x.id !== id && x.layer === s.layer);
       if (edge === "start") {
-        const minSrc = Math.max(0, s.srcStart - (s.start)); // cannot push start before 0
+        const minSrc = Math.max(0, s.srcStart - (s.start));
         let newSrcStart = Math.max(0, Math.min(s.srcEnd - 0.1, s.srcStart + deltaSec));
         let newStart = s.start + (newSrcStart - s.srcStart);
-        // prevent overlap with previous
         const prevSeg = sameLayer.filter((x) => endOf(x) <= s.start + 1e-3).sort((a, b) => endOf(b) - endOf(a))[0];
         if (prevSeg && newStart < endOf(prevSeg)) {
           const diff = endOf(prevSeg) - newStart;
@@ -239,19 +246,39 @@ export default function EditStudio() {
     }));
   };
 
-  /** Move a segment to a new (start, layer). If conflict on target layer, find free layer below. */
+  /** Move a segment (and other selected segments as a group). */
   const moveSegment = (id: string, newStart: number, targetLayer: number) => {
     setSegments((prev) => {
       const seg = prev.find((s) => s.id === id);
       if (!seg) return prev;
-      const ns = Math.max(0, newStart);
-      const len = lenOf(seg);
-      // Try targetLayer first; if conflict, walk down
-      let layer = targetLayer;
-      const conflict = (L: number) =>
-        prev.some((s) => s.id !== id && s.layer === L && overlaps({ start: ns, end: ns + len }, { start: s.start, end: endOf(s) }));
-      while (conflict(layer)) layer++;
-      return prev.map((s) => (s.id === id ? { ...s, start: ns, layer } : s));
+      const groupIds = selectedIds.has(id) && selectedIds.size > 1 ? new Set(selectedIds) : new Set([id]);
+      const deltaStart = Math.max(0, newStart) - seg.start;
+      const deltaLayer = targetLayer - seg.layer;
+      const groupArr = Array.from(groupIds);
+      const minStart = Math.min(...groupArr.map((gid) => prev.find((s) => s.id === gid)?.start ?? 0));
+      const minLayer = Math.min(...groupArr.map((gid) => prev.find((s) => s.id === gid)?.layer ?? 0));
+      const dStart = Math.max(deltaStart, -minStart);
+      const dLayer = Math.max(deltaLayer, -minLayer);
+      const moved = prev.map((s) =>
+        groupIds.has(s.id) ? { ...s, start: s.start + dStart, layer: s.layer + dLayer } : s,
+      );
+      const resolved = [...moved];
+      for (const gid of groupArr) {
+        const idx = resolved.findIndex((s) => s.id === gid);
+        if (idx < 0) continue;
+        const s = resolved[idx];
+        let L = s.layer;
+        const conflict = (lay: number) =>
+          resolved.some(
+            (o) =>
+              !groupIds.has(o.id) &&
+              o.layer === lay &&
+              overlaps({ start: s.start, end: endOf(s) }, { start: o.start, end: endOf(o) }),
+          );
+        while (conflict(L)) L++;
+        resolved[idx] = { ...s, layer: L };
+      }
+      return resolved;
     });
   };
 
