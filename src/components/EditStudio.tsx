@@ -325,15 +325,15 @@ export default function EditStudio() {
         <div className="relative flex h-full max-h-[420px] flex-1 items-center justify-center rounded-2xl bg-[hsl(var(--slide-bg))] p-4 ring-1 ring-white/5 overflow-hidden">
           {mainSlide?.slideUrl ? (
             <img src={mainSlide.slideUrl} alt="slide" className="max-h-full max-w-full rounded-lg object-contain" />
-          ) : mainSlide ? (
+          ) : mainSlide && overlayImages.length === 0 ? (
             <div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
               <ImageIcon className="h-10 w-10 opacity-40" />
               <div className="text-sm">Slide em branco</div>
               <div className="text-xs opacity-70">Use “Mídia” ou “Gravar nova cena” para começar</div>
             </div>
-          ) : (
+          ) : !mainSlide && overlayImages.length === 0 ? (
             <div className="text-muted-foreground text-sm">Sem slide ativo</div>
-          )}
+          ) : null}
           {overlayImages.map((o) => (
             <img
               key={o.id}
